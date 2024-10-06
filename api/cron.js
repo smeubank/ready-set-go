@@ -1,15 +1,9 @@
 import axios from 'axios';
 import { format, addDays, startOfWeek, addWeeks } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import twilio from 'twilio';
+import nodemailer from 'nodemailer';
 
 const API_URL = 'https://api.strawpoll.com/v3/polls';
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
-const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
-const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER;
-const RECIPIENT_WHATSAPP_NUMBER = process.env.RECIPIENT_WHATSAPP_NUMBER;
-
-const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
 function createPollOptions() {
   const options = [];
@@ -68,26 +62,34 @@ export default async function handler(req, res) {
     });
     console.log('Poll created successfully:', response.data);
 
-    // Send WhatsApp message
+    // Send email
     const pollLink = response.data.url; // Assuming the response contains a URL to the poll
-    console.log('Preparing to send WhatsApp message...');
-    const message = await client.messages.create({
-      from: `whatsapp:${TWILIO_WHATSAPP_NUMBER}`,
-      to: `whatsapp:${RECIPIENT_WHATSAPP_NUMBER}`,
-      body: `Your poll has been created! Check it out here: ${pollLink}`,
+    console.log('Preparing to send email...');
+
+    // Create a transporter object using SMTP transport
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER, // Your email address
+        pass: process.env.EMAIL_PASS, // Your email password or app-specific password
+      },
     });
 
-    console.log('WhatsApp message request:', {
-      from: `whatsapp:${TWILIO_WHATSAPP_NUMBER}`,
-      to: `whatsapp:${RECIPIENT_WHATSAPP_NUMBER}`,
-      body: `Your poll has been created! Check it out here: ${pollLink}`,
-    });
+    // Set up email data
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: 'eubank.steven88@gmail.com',
+      subject: 'Your Poll is Ready!',
+      text: `Your poll has been created! Check it out here: ${pollLink}`,
+    };
 
-    // Log the full Twilio response
-    console.log('WhatsApp message sent successfully:', message);
-    res.status(200).json({ message: 'Poll created and WhatsApp message sent successfully', data: response.data });
+    // Send email
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', info.response);
+
+    res.status(200).json({ message: 'Poll created and email sent successfully', data: response.data });
   } catch (error) {
-    console.error('Error creating poll or sending WhatsApp message:', error.response ? error.response.data : error.message);
-    res.status(500).json({ error: 'Failed to create poll or send WhatsApp message' });
+    console.error('Error creating poll or sending email:', error.response ? error.response.data : error.message);
+    res.status(500).json({ error: 'Failed to create poll or send email' });
   }
 }
