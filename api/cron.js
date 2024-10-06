@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { format, addDays, startOfWeek } from 'date-fns';
+import { format, addDays, startOfWeek, addWeeks } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import twilio from 'twilio';
 
@@ -13,7 +13,7 @@ const client = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
 
 function createPollOptions() {
   const options = [];
-  const startDate = startOfWeek(new Date(), { weekStartsOn: 1 }); // Monday as the first day of the week
+  const startDate = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), 1); // Start from next Monday
   const timeZone = 'Europe/Berlin';
 
   for (let i = 0; i < 7; i++) {
@@ -83,7 +83,8 @@ export default async function handler(req, res) {
       body: `Your poll has been created! Check it out here: ${pollLink}`,
     });
 
-    console.log('WhatsApp message sent successfully:', message.sid);
+    // Log the full Twilio response
+    console.log('WhatsApp message sent successfully:', message);
     res.status(200).json({ message: 'Poll created and WhatsApp message sent successfully', data: response.data });
   } catch (error) {
     console.error('Error creating poll or sending WhatsApp message:', error.response ? error.response.data : error.message);
