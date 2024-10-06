@@ -70,13 +70,20 @@ export default async function handler(req, res) {
 
     // Send WhatsApp message
     const pollLink = response.data.url; // Assuming the response contains a URL to the poll
-    await client.messages.create({
+    console.log('Preparing to send WhatsApp message...');
+    const message = await client.messages.create({
       from: `whatsapp:${TWILIO_WHATSAPP_NUMBER}`,
       to: `whatsapp:${RECIPIENT_WHATSAPP_NUMBER}`,
       body: `Your poll has been created! Check it out here: ${pollLink}`,
     });
 
-    console.log('WhatsApp message sent successfully');
+    console.log('WhatsApp message request:', {
+      from: `whatsapp:${TWILIO_WHATSAPP_NUMBER}`,
+      to: `whatsapp:${RECIPIENT_WHATSAPP_NUMBER}`,
+      body: `Your poll has been created! Check it out here: ${pollLink}`,
+    });
+
+    console.log('WhatsApp message sent successfully:', message.sid);
     res.status(200).json({ message: 'Poll created and WhatsApp message sent successfully', data: response.data });
   } catch (error) {
     console.error('Error creating poll or sending WhatsApp message:', error.response ? error.response.data : error.message);
