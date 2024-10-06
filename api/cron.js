@@ -10,6 +10,9 @@ function createPollOptions() {
   const startDate = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), 1); // Start from next Monday
   const timeZone = 'Europe/Berlin';
 
+  // Add a field for the user's name
+  options.push({ type: 'text', value: 'Please enter your name' });
+
   for (let i = 0; i < 7; i++) {
     const date = addDays(startDate, i);
     const zonedDate = toZonedTime(date, timeZone);
