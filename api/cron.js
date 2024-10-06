@@ -10,9 +10,6 @@ function createPollOptions() {
   const startDate = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), 1); // Start from next Monday
   const timeZone = 'Europe/Berlin';
 
-  // Add a field for the user's name
-  options.push({ type: 'text', value: 'Please enter your name' });
-
   for (let i = 0; i < 7; i++) {
     const date = addDays(startDate, i);
     const zonedDate = toZonedTime(date, timeZone);
@@ -44,8 +41,9 @@ export default async function handler(req, res) {
       is_private: true,
       is_multiple_choice: true,
       multiple_choice_min: 1,
-      multiple_choice_max: 10, // Set to a high number to allow multiple selections
+      multiple_choice_max: 14, // Set to a high number to allow multiple selections
       results_visibility: 'always',
+      require_voter_names: true, // Require voters to enter their names
     },
     poll_meta: {
       timezone: 'Europe/Berlin',
