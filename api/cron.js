@@ -89,7 +89,19 @@ export default async function handler(req, res) {
 
     res.status(200).json({ message: 'Poll created and email sent successfully', data: response.data });
   } catch (error) {
-    console.error('Error creating poll or sending email:', error.response ? error.response.data : error.message);
+    console.error('Error creating poll or sending email:', error);
+
+    // Log specific error details
+    if (error.response) {
+      console.error('Response data:', error.response.data);
+      console.error('Response status:', error.response.status);
+      console.error('Response headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('Request data:', error.request);
+    } else {
+      console.error('Error message:', error.message);
+    }
+
     res.status(500).json({ error: 'Failed to create poll or send email' });
   }
 }
