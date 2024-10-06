@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { format, addDays, startOfWeek } from 'date-fns';
-import { utcToZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 
 const API_URL = 'https://api.strawpoll.com/v3/polls';
 
@@ -11,8 +11,8 @@ function createPollOptions() {
 
   for (let i = 0; i < 7; i++) {
     const date = addDays(startDate, i);
-    const zonedDate = utcToZonedTime(date, timeZone);
-    const formattedDate = format(zonedDate, 'EEEE dd/MM');
+    const zonedDate = toZonedTime(date, timeZone);
+    const formattedDate = format(zonedDate, 'EEEE dd/MM', { timeZone });
 
     options.push({ type: 'text', value: `${formattedDate}` });
     options.push({ type: 'text', value: `${formattedDate} (intermediate)` });
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     const response = await axios.post(API_URL, pollData, {
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': process.env.STRAWPOLL_API_KEY,
+        'X-API-Key': apiKey,
       },
     });
     console.log('Poll created successfully:', response.data);
