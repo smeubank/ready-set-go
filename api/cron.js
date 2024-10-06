@@ -25,7 +25,13 @@ function createPollOptions() {
 export default async function handler(req, res) {
   console.log('Handler function started');
 
-  console.log('Using API Key:', process.env.STRAWPOLL_API_KEY);
+  const apiKey = process.env.STRAWPOLL_API_KEY;
+  if (!apiKey) {
+    console.error('API Key is missing');
+    return res.status(500).json({ error: 'API Key is missing' });
+  }
+
+  console.log('Using API Key:', apiKey);
 
   const pollData = {
     title: 'Weekly Poll',
