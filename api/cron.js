@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       is_private: true,
       is_multiple_choice: true,
       multiple_choice_min: 1,
-      multiple_choice_max: 2,
+      multiple_choice_max: null, // Allow selecting as many options as desired
       results_visibility: 'always',
     },
     poll_meta: {
