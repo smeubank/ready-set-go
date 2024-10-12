@@ -2,6 +2,7 @@ import axios from 'axios';
 import { format, addDays, startOfWeek, addWeeks } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import nodemailer from 'nodemailer';
+import * as Sentry from '@sentry/nuxt';
 
 const API_URL = 'https://api.strawpoll.com/v3/polls';
 
@@ -26,34 +27,40 @@ function createPollOptions() {
 export default async function handler(req, res) {
   console.log('Handler function started');
 
-  const apiKey = process.env.STRAWPOLL_API_KEY;
-  if (!apiKey) {
-    console.error('API Key is missing');
-    return res.status(500).json({ error: 'API Key is missing' });
-  }
-
-  console.log('Using API Key:', apiKey);
-
-  const pollData = {
-    title: 'Weekly Poll',
-    poll_options: createPollOptions(),
-    poll_config: {
-      is_private: true,
-      is_multiple_choice: true,
-      multiple_choice_min: 1,
-      multiple_choice_max: 14, // Set to a high number to allow multiple selections
-      results_visibility: 'always',
-      require_voter_names: true, // Require voters to enter their names
-    },
-    poll_meta: {
-      timezone: 'Europe/Berlin',
-    },
-    type: 'multiple_choice',
-  };
-
-  console.log('Poll data prepared:', JSON.stringify(pollData, null, 2));
+  // 🟡 Notify Sentry your job is running:
+  const checkInId = Sentry.captureCheckIn({
+    monitorSlug: "<monitor-slug>", // Replace with your actual monitor slug
+    status: "in_progress",
+  });
 
   try {
+    const apiKey = process.env.STRAWPOLL_API_KEY;
+    if (!apiKey) {
+      console.error('API Key is missing');
+      throw new Error('API Key is missing');
+    }
+
+    console.log('Using API Key:', apiKey);
+
+    const pollData = {
+      title: 'Weekly Poll',
+      poll_options: createPollOptions(),
+      poll_config: {
+        is_private: true,
+        is_multiple_choice: true,
+        multiple_choice_min: 1,
+        multiple_choice_max: 14, // Set to a high number to allow multiple selections
+        results_visibility: 'always',
+        require_voter_names: true, // Require voters to enter their names
+      },
+      poll_meta: {
+        timezone: 'Europe/Berlin',
+      },
+      type: 'multiple_choice',
+    };
+
+    console.log('Poll data prepared:', JSON.stringify(pollData, null, 2));
+
     console.log('Sending request to StrawPoll API...');
     const response = await axios.post(API_URL, pollData, {
       headers: {
@@ -88,9 +95,23 @@ export default async function handler(req, res) {
     const info = await transporter.sendMail(mailOptions);
     console.log('Email sent successfully:', info.response);
 
+    // 🟢 Notify Sentry your job has completed successfully:
+    Sentry.captureCheckIn({
+      checkInId,
+      monitorSlug: "<monitor-slug>",
+      status: "ok",
+    });
+
     res.status(200).json({ message: 'Poll created and email sent successfully', data: response.data });
   } catch (error) {
     console.error('Error creating poll or sending email:', error);
+
+    // 🔴 Notify Sentry your job has failed:
+    Sentry.captureCheckIn({
+      checkInId,
+      monitorSlug: "<monitor-slug>",
+      status: "error",
+    });
 
     // Log specific error details
     if (error.response) {
